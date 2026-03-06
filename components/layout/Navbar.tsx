@@ -11,6 +11,7 @@ const navLinks = [
     { name: "GKT & Minting", href: "/gkt" },
     { name: "Entertainment", href: "/entertainment" },
     { name: "Auditions", href: "/auditions" },
+    { name: "Business Tree", href: "/business-tree" },
 ];
 
 export default function Navbar() {
