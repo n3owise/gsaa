@@ -5,7 +5,7 @@ import SmoothScroll from "@/components/ui/SmoothScroll";
 import Navbar from "@/components/layout/Navbar";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { SmoothCursor } from "@/components/ui/smooth-cursor";
-
+import ChatBot from "@/components/ui/ChatBot";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -39,6 +39,7 @@ export default function RootLayout({
           <Navbar />
           {children}
         </SmoothScroll>
+        <ChatBot />
       </body>
     </html>
   );
