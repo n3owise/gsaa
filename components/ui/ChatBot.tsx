@@ -55,19 +55,24 @@ export default function ChatBot() {
             }
 
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'I apologize, but I am unable to connect to the server right now. Please try again later.');
+            }
+
             const assistantMessage: Message = {
                 role: 'assistant',
                 content: data.reply.content,
             };
 
             setMessages((prev) => [...prev, assistantMessage]);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             setMessages((prev) => [
                 ...prev,
                 {
                     role: 'assistant',
-                    content: 'I apologize, but I am unable to connect to the server right now. Please try again later.',
+                    content: error.message || 'Maafi chahta hoon, par abhi main server se connect nahi kar paa raha hoon. Kripya thodi der baad phir se try karein.',
                 },
             ]);
         } finally {

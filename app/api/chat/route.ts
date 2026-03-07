@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import path from 'path';
 
-
-
-// Initialize Gemini client
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+// Initialize Gemini client with the official SDK
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid messages array' }, { status: 400 });
     }
 
-    // Read knowledge base dynamically on every request to get the latest updates
+    // Read knowledge base dynamically
     let knowledgeBase = '';
     try {
       knowledgeBase = fs.readFileSync(path.join(process.cwd(), 'knowledge.txt'), 'utf8');
@@ -26,7 +22,7 @@ export async function POST(req: Request) {
       console.error('Error reading knowledge.txt:', error);
     }
 
-    // Prepare system instructions
+    // Prepare system instructions (GSAA Assistant Persona)
     const systemInstruction = `You are GSAA AI Assistant, the official assistant of GSAA Global Private Limited. GSAA Global is a multi-service digital ecosystem combining entertainment, shopping, recharge, rewards, token/point concepts, and team-growth oriented modules.
 
 Official company details:
@@ -90,25 +86,33 @@ ${knowledgeBase}
 """
 `;
 
-    // Convert from standard generic role format to Gemini's expected format
-    const contents = messages.map((m: any) => ({
+    // Initialize the model with system instruction
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      systemInstruction: systemInstruction
+    });
+
+    // Convert history for Gemini
+    // standard generic format: [{ role: 'user'|'assistant', content: '...' }]
+    // Gemini format: [{ role: 'user'|'model', parts: [{ text: '...' }] }]
+    const history = messages.slice(0, -1).map((m: any) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
 
-    // Generate content using Gemini
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: contents,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.2, // Low temperature for factual, deterministic replies
-      },
+    const latestMessage = messages[messages.length - 1].content;
+
+    // Start chat session
+    const chat = model.startChat({
+      history: history,
+      generationConfig: {
+        temperature: 0.2,
+      }
     });
 
-    // Extract the reply text and shape it like the previous API response
-    // for seamless frontend compatibility
-    const replyText = response.text || "I'm sorry, I couldn't generate a response.";
+    const result = await chat.sendMessage(latestMessage);
+    const response = await result.response;
+    const replyText = response.text();
 
     return NextResponse.json({
       reply: {
@@ -118,8 +122,18 @@ ${knowledgeBase}
     });
   } catch (error: any) {
     console.error('Gemini Chat API Error:', error);
+
+    // Check for quota error
+    const errorMessage = error.message || '';
+    if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+      return NextResponse.json(
+        { error: 'QUOTA_EXCEEDED', message: 'Aapki free limit khatam ho gayi hai. Kripya thodi der baad try karein ya API key check karein.' },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error.message || 'An error occurred during the request.' },
+      { error: 'SERVER_ERROR', message: error.message || 'An error occurred during the request.' },
       { status: 500 }
     );
   }
