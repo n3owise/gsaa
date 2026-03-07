@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -14,7 +14,7 @@ const navLinks = [
     { name: "Business Tree", href: "/business-tree" },
 ];
 
-export default function Navbar() {
+const Navbar = memo(function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -129,4 +129,6 @@ export default function Navbar() {
             </AnimatePresence>
         </>
     );
-}
+});
+
+export default Navbar;

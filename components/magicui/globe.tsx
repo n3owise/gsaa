@@ -1,8 +1,7 @@
 "use client";
 
 import createGlobe, { COBEOptions } from "cobe";
-import { useCallback, useEffect, useRef, useState } from "react";
-
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const GLOBE_CONFIG: COBEOptions = {
@@ -40,7 +39,7 @@ const GLOBE_CONFIG: COBEOptions = {
   ],
 };
 
-export function Globe({
+export const Globe = memo(function Globe({
   className,
   config = GLOBE_CONFIG,
 }: {
@@ -96,7 +95,9 @@ export function Globe({
       onRender,
     });
 
-    setTimeout(() => (canvasRef.current!.style.opacity = "1"));
+    setTimeout(() => {
+      if (canvasRef.current) canvasRef.current.style.opacity = "1";
+    });
     return () => globe.destroy();
   }, []);
 
@@ -126,4 +127,4 @@ export function Globe({
       />
     </div>
   );
-}
+});

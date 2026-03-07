@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactFlow, {
     Background,
@@ -482,7 +482,7 @@ const layoutTree = (node: any, collapsedSet: Set<string>, depth: number, cursor:
     return { id: node.id, y: yPosition, nodes, edges };
 };
 
-function MindNode({ id, data, selected }: any) {
+const MindNode = memo(function MindNode({ id, data, selected }: any) {
     return (
         <div
             className={`${styles.mindNode} ${selected ? styles.mindNodeSelected : ''} ${data.isRoot ? styles.mindNodeRoot : ''
@@ -517,7 +517,7 @@ function MindNode({ id, data, selected }: any) {
             />
         </div>
     );
-}
+});
 
 const STATUS_MESSAGES = [
     "INITIALIZING BUSINESS ENGINE...",
