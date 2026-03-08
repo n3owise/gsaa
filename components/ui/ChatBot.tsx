@@ -50,14 +50,10 @@ export default function ChatBot() {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch response');
-            }
-
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'I apologize, but I am unable to connect to the server right now. Please try again later.');
+                throw new Error(data.message || 'Maafi chahta hoon, par abhi main server se connect nahi kar paa raha hoon. Kripya thodi der baad phir se try karein.');
             }
 
             const assistantMessage: Message = {

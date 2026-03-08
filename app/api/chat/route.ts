@@ -95,10 +95,16 @@ ${knowledgeBase}
     // Convert history for Gemini
     // standard generic format: [{ role: 'user'|'assistant', content: '...' }]
     // Gemini format: [{ role: 'user'|'model', parts: [{ text: '...' }] }]
-    const history = messages.slice(0, -1).map((m: any) => ({
+    let history = messages.slice(0, -1).map((m: any) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
+
+    // CRITICAL: Gemini requires the first message in history to be from 'user'.
+    // If our first message is from the 'assistant' (greeting), we skip it for the history.
+    if (history.length > 0 && history[0].role === 'model') {
+      history = history.slice(1);
+    }
 
     const latestMessage = messages[messages.length - 1].content;
 
