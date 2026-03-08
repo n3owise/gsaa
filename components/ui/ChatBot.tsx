@@ -50,7 +50,17 @@ export default function ChatBot() {
                 }),
             });
 
-            const data = await response.json();
+            // Safely handle non-JSON or error responses
+            let data;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json();
+            } else {
+                // If not JSON, it's likely a Vercel 504/500 HTML page
+                const text = await response.text();
+                console.error("Non-JSON response received:", text);
+                throw new Error("Server ne galat response diya (Non-JSON). Kripya check karein ki Vercel par API key set hai ya nahi.");
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || 'Maafi chahta hoon, par abhi main server se connect nahi kar paa raha hoon. Kripya thodi der baad phir se try karein.');

@@ -4,10 +4,20 @@ import fs from 'fs';
 import path from 'path';
 
 // Initialize Gemini client with the official SDK
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const apiKey = process.env.GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function POST(req: Request) {
   try {
+    // 1. Verify API Key
+    if (!apiKey) {
+      console.error('ERROR: GEMINI_API_KEY is missing from environment variables.');
+      return NextResponse.json(
+        { error: 'CONFIG_ERROR', message: 'GEMINI_API_KEY is not set in Vercel. Please add it to your project settings.' },
+        { status: 500 }
+      );
+    }
+
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
@@ -17,7 +27,13 @@ export async function POST(req: Request) {
     // Read knowledge base dynamically
     let knowledgeBase = '';
     try {
-      knowledgeBase = fs.readFileSync(path.join(process.cwd(), 'knowledge.txt'), 'utf8');
+      // Using resolve and process.cwd() for Vercel NFT compatibility
+      const knowledgePath = path.resolve(process.cwd(), 'knowledge.txt');
+      if (fs.existsSync(knowledgePath)) {
+        knowledgeBase = fs.readFileSync(knowledgePath, 'utf8');
+      } else {
+        console.warn('Warning: knowledge.txt not found at', knowledgePath);
+      }
     } catch (error) {
       console.error('Error reading knowledge.txt:', error);
     }
