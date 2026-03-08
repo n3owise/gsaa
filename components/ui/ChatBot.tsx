@@ -25,8 +25,29 @@ export default function ChatBot() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const checkApiHealth = async () => {
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ping: true }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                console.error("API Health Check failed:", data);
+            } else {
+                console.log("API Health Check OK:", data.message);
+            }
+        } catch (error) {
+            console.error("API Health Check error:", error);
+        }
+    };
+
     useEffect(() => {
-        scrollToBottom();
+        if (isOpen) {
+            scrollToBottom();
+            checkApiHealth(); // Check health when drawer opens
+        }
     }, [messages, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -74,11 +95,16 @@ export default function ChatBot() {
             setMessages((prev) => [...prev, assistantMessage]);
         } catch (error: any) {
             console.error(error);
+            // Show a more descriptive error message if we have one
+            const displayError = error.message.includes("Server ne galat response")
+                ? "Server se connection nahi ban paa raha. Kripya Vercel Deployment logs check karein."
+                : error.message;
+
             setMessages((prev) => [
                 ...prev,
                 {
                     role: 'assistant',
-                    content: error.message || 'Maafi chahta hoon, par abhi main server se connect nahi kar paa raha hoon. Kripya thodi der baad phir se try karein.',
+                    content: `Error: ${displayError}`,
                 },
             ]);
         } finally {

@@ -3,10 +3,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     // 1. Verify API Key (Inside handler for Vercel connection stability)
     const apiKey = process.env.GEMINI_API_KEY || '';
+
+    // Masked log for Vercel debugging
+    console.log('API Key present:', !!apiKey, apiKey ? `(ends with ...${apiKey.slice(-4)})` : '(empty)');
 
     if (!apiKey) {
       console.error('ERROR: GEMINI_API_KEY is missing from environment variables.');
@@ -18,7 +23,9 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    const { messages } = await req.json();
+    // 2. Simple ping test for debugging Vercel connection
+    const { messages, ping } = await req.json();
+    if (ping) return NextResponse.json({ status: 'ok', message: 'Chat API is alive' });
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Invalid messages array' }, { status: 400 });
@@ -145,18 +152,21 @@ ${knowledgeBase}
   } catch (error: any) {
     console.error('Gemini Chat API Error:', error);
 
+    // Ensure we ALWAYS return JSON so the frontend doesn't show "Non-JSON" error
+    const detailedError = {
+      error: 'SERVER_ERROR',
+      message: error.message || 'An unexpected error occurred.',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    };
+
     // Check for quota error
-    const errorMessage = error.message || '';
-    if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+    if (detailedError.message.includes('429') || detailedError.message.includes('quota') || detailedError.message.includes('RESOURCE_EXHAUSTED')) {
       return NextResponse.json(
-        { error: 'QUOTA_EXCEEDED', message: 'Aapki free limit khatam ho gayi hai. Kripya thodi der baad try karein ya API key check karein.' },
+        { error: 'QUOTA_EXCEEDED', message: 'Aapki free limit khatam ho gayi hai. Kripya thodi der baad try karein.' },
         { status: 429 }
       );
     }
 
-    return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error.message || 'An error occurred during the request.' },
-      { status: 500 }
-    );
+    return NextResponse.json(detailedError, { status: 500 });
   }
 }
