@@ -27,8 +27,8 @@ export async function POST(req: Request) {
     // Read knowledge base dynamically
     let knowledgeBase = '';
     try {
-      // Using resolve and process.cwd() for Vercel NFT compatibility
-      const knowledgePath = path.resolve(process.cwd(), 'knowledge.txt');
+      // Using public folder and process.cwd() for Vercel NFT compatibility
+      const knowledgePath = path.resolve(process.cwd(), 'public', 'knowledge.txt');
       if (fs.existsSync(knowledgePath)) {
         knowledgeBase = fs.readFileSync(knowledgePath, 'utf8');
       } else {
@@ -104,7 +104,7 @@ ${knowledgeBase}
 
     // Initialize the model with system instruction
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-1.5-flash",
       systemInstruction: systemInstruction
     });
 
