@@ -3,13 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import path from 'path';
 
-// Initialize Gemini client with the official SDK
-const apiKey = process.env.GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(apiKey);
-
 export async function POST(req: Request) {
   try {
-    // 1. Verify API Key
+    // 1. Verify API Key (Inside handler for Vercel connection stability)
+    const apiKey = process.env.GEMINI_API_KEY || '';
+
     if (!apiKey) {
       console.error('ERROR: GEMINI_API_KEY is missing from environment variables.');
       return NextResponse.json(
@@ -17,6 +15,8 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     const { messages } = await req.json();
 
